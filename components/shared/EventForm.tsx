@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { eventFormSchema } from "@/lib/validator"
 import * as z from 'zod'
@@ -13,24 +13,23 @@ import { Textarea } from "@/components/ui/textarea"
 import { FileUploader } from "./FileUploader"
 import { useState } from "react"
 import Image from "next/image"
-import DatePicker from "react-datepicker";
+import DatePicker from "react-datepicker"
 import { useUploadThing } from '@/lib/uploadthing'
 import { toast } from "sonner"
 
-import "react-datepicker/dist/react-datepicker.css";
+import "react-datepicker/dist/react-datepicker.css"
 import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
 
-
 type EventFormProps = {
   userId: string
   type: "Create" | "Update"
-  event?: IEvent,
+  event?: IEvent
   eventId?: string
 }
 
-// ── UI helpers (new) ────────────────────────────────────────────────────────
+// ── UI helpers ───────────────────────────────────────────────────────────────
 const SectionCard = ({ number, label, children }: {
   number: number; label: string; children: React.ReactNode
 }) => (
@@ -51,161 +50,136 @@ const inputCls =
   "h-12 rounded-xl border border-white/10 bg-white/5 text-white " +
   "placeholder:text-white/30 focus-visible:ring-2 focus-visible:ring-violet-500/50 " +
   "focus-visible:border-violet-500/50 transition-all duration-200"
-// ───────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
-  const initialValues = event && type === 'Update' 
-    ? { 
-      ...event, 
-      startDateTime: new Date(event.startDateTime), 
-      endDateTime: new Date(event.endDateTime) 
-    }
-    : eventDefaultValues;
-  const router = useRouter();
+  const initialValues = event && type === 'Update'
+    ? {
+        ...event,
+        startDateTime: new Date(event.startDateTime),
+        endDateTime:   new Date(event.endDateTime),
+      }
+    : eventDefaultValues
+  const router = useRouter()
 
   const { startUpload } = useUploadThing('imageUploader')
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
-    defaultValues: initialValues
+    defaultValues: initialValues,
   })
- 
-  async function onSubmit(values: z.infer<typeof eventFormSchema>) {
-    let uploadedImageUrl = values.imageUrl;
 
-    if(files.length > 0) {
-      // ── Check file size before uploading ──
-      const file = files[0];
-      const fileSizeMB = file.size / 1024 / 1024;
+  // ── current postedBy value (reactive) ──
+  const postedBy = form.watch('postedBy')
+  const showContactFields = postedBy === 'organizer' || postedBy === 'student'
+
+  async function onSubmit(values: z.infer<typeof eventFormSchema>) {
+    let uploadedImageUrl = values.imageUrl
+
+    if (files.length > 0) {
+      const file = files[0]
+      const fileSizeMB = file.size / 1024 / 1024
 
       if (fileSizeMB > 4) {
         toast.error("Image too large", {
           description: `Your image is ${fileSizeMB.toFixed(1)}MB. Please re-upload one under 4MB.`,
-        });
-        return;
+        })
+        return
       }
 
-      // ── Check file type ──
       if (!file.type.startsWith("image/")) {
         toast.error("Invalid file type", {
           description: "Please upload a valid image (JPG, PNG, WEBP, etc.)",
-        });
-        return;
+        })
+        return
       }
 
       try {
         const uploadedImages = await startUpload(files)
 
-        if(!uploadedImages || uploadedImages.length === 0) {
+        if (!uploadedImages || uploadedImages.length === 0) {
           toast.error("Image upload failed", {
             description: "Could not upload your image. Please try again.",
-          });
+          })
           return
         }
 
         uploadedImageUrl = uploadedImages[0].url
 
       } catch (uploadError: any) {
-        const msg: string = uploadError?.message ?? "";
+        const msg: string = uploadError?.message ?? ""
 
         if (msg.includes("size") || msg.includes("FileSizeMismatch")) {
-          toast.error("Image too large", {
-            description: "Please re-upload an image under 4MB.",
-          });
+          toast.error("Image too large", { description: "Please re-upload an image under 4MB." })
         } else if (msg.includes("500") || msg.includes("Internal")) {
-          toast.error("Server error during upload", {
-            description: "Internal server error. Please try again later.",
-          });
+          toast.error("Server error during upload", { description: "Please try again later." })
         } else if (msg.includes("Invalid config") || msg.includes("presigned")) {
-          toast.error("Upload configuration error", {
-            description: "There's a server configuration issue. Please contact support.",
-          });
+          toast.error("Upload configuration error", { description: "Please contact support." })
         } else {
-          toast.error("Upload failed", {
-            description: msg || "Unknown error during image upload.",
-          });
+          toast.error("Upload failed", { description: msg || "Unknown error during image upload." })
         }
-        return;
+        return
       }
     }
 
-    if(type === 'Create') {
+    if (type === 'Create') {
       try {
         const newEvent = await createEvent({
           event: { ...values, imageUrl: uploadedImageUrl },
           userId,
-          path: '/profile'
+          path: '/profile',
         })
 
-        if(newEvent) {
-          form.reset();
+        if (newEvent) {
+          form.reset()
           toast.success("Event created successfully!", {
             description: "Your event is now live and visible to others.",
-          });
+          })
           router.push(`/events/${newEvent._id}`)
         }
       } catch (error: any) {
-        const msg: string = error?.message ?? "";
+        const msg: string = error?.message ?? ""
 
         if (msg.includes("500") || msg.includes("Internal")) {
-          toast.error("Internal server error", {
-            description: "Something went wrong on the server. Please try again later.",
-          });
+          toast.error("Internal server error", { description: "Please try again later." })
         } else if (msg.includes("401") || msg.includes("Unauthorized")) {
-          toast.error("Unauthorized", {
-            description: "You must be logged in to create an event.",
-          });
+          toast.error("Unauthorized", { description: "You must be logged in to create an event." })
         } else if (msg.includes("400") || msg.includes("validation")) {
-          toast.error("Invalid form data", {
-            description: "Please check all fields and try again.",
-          });
+          toast.error("Invalid form data", { description: "Please check all fields and try again." })
         } else {
-          toast.error("Failed to create event", {
-            description: msg || "Please try again.",
-          });
+          toast.error("Failed to create event", { description: msg || "Please try again." })
         }
-        console.log(error);
+        console.log(error)
       }
     }
 
-    if(type === 'Update') {
-      if(!eventId) {
-        router.back()
-        return;
-      }
+    if (type === 'Update') {
+      if (!eventId) { router.back(); return }
 
       try {
         const updatedEvent = await updateEvent({
           userId,
           event: { ...values, imageUrl: uploadedImageUrl, _id: eventId },
-          path: `/events/${eventId}`
+          path: `/events/${eventId}`,
         })
 
-        if(updatedEvent) {
-          form.reset();
-          toast.success("Event updated successfully!", {
-            description: "Your changes have been saved.",
-          });
+        if (updatedEvent) {
+          form.reset()
+          toast.success("Event updated successfully!", { description: "Your changes have been saved." })
           router.push(`/events/${updatedEvent._id}`)
         }
       } catch (error: any) {
-        const msg: string = error?.message ?? "";
+        const msg: string = error?.message ?? ""
 
         if (msg.includes("500") || msg.includes("Internal")) {
-          toast.error("Internal server error", {
-            description: "Something went wrong on the server. Please try again later.",
-          });
+          toast.error("Internal server error", { description: "Please try again later." })
         } else if (msg.includes("401") || msg.includes("Unauthorized")) {
-          toast.error("Unauthorized", {
-            description: "You don't have permission to update this event.",
-          });
+          toast.error("Unauthorized", { description: "You don't have permission to update this event." })
         } else {
-          toast.error("Failed to update event", {
-            description: msg || "Please try again.",
-          });
+          toast.error("Failed to update event", { description: msg || "Please try again." })
         }
-        console.log(error);
+        console.log(error)
       }
     }
   }
@@ -413,6 +387,146 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               </FormItem>
             )}
           />
+        </SectionCard>
+
+        {/* ── 6. Posted By ── */}
+        <SectionCard number={6} label="Posted By">
+          <FormField
+            control={form.control}
+            name="postedBy"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <div className="flex gap-3">
+                    {/* Admin */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('admin')}
+                      className={`flex-1 h-12 rounded-xl border text-sm font-medium transition-all duration-200
+                        ${field.value === 'admin'
+                          ? 'border-violet-500 bg-violet-500/20 text-violet-300'
+                          : 'border-white/10 bg-white/5 text-white/50 hover:border-white/20'
+                        }`}
+                    >
+                      Admin
+                    </button>
+                    {/* Event Organizer */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('organizer')}
+                      className={`flex-1 h-12 rounded-xl border text-sm font-medium transition-all duration-200
+                        ${field.value === 'organizer'
+                          ? 'border-violet-500 bg-violet-500/20 text-violet-300'
+                          : 'border-white/10 bg-white/5 text-white/50 hover:border-white/20'
+                        }`}
+                    >
+                      Event Organizer
+                    </button>
+                    {/* Student */}
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('student')}
+                      className={`flex-1 h-12 rounded-xl border text-sm font-medium transition-all duration-200
+                        ${field.value === 'student'
+                          ? 'border-violet-500 bg-violet-500/20 text-violet-300'
+                          : 'border-white/10 bg-white/5 text-white/50 hover:border-white/20'
+                        }`}
+                    >
+                      Student
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage className="text-red-400 text-xs" />
+              </FormItem>
+            )}
+          />
+
+          {/* Contact fields — shown for organizer and student */}
+          {showContactFields && (
+            <div className="flex flex-col gap-4 mt-2">
+              <p className="text-xs text-white/40 uppercase tracking-wider">
+                {postedBy === 'student' ? 'Student Details' : 'Organizer Details'}
+              </p>
+
+              {/* Name + Email */}
+              <div className="flex flex-col gap-4 md:flex-row">
+                <FormField
+                  control={form.control}
+                  name="organizerInfo.name"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <Input
+                          placeholder={postedBy === 'student' ? 'Your full name' : 'Organizer full name'}
+                          {...field}
+                          className={inputCls}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-400 text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="organizerInfo.email"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <Input
+                          placeholder={postedBy === 'student' ? 'Your college email' : 'Organizer email'}
+                          type="email"
+                          {...field}
+                          className={inputCls}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-400 text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Instagram + LinkedIn */}
+              <div className="flex flex-col gap-4 md:flex-row">
+                <FormField
+                  control={form.control}
+                  name="organizerInfo.instagram"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-sm">
+                            @
+                          </span>
+                          <Input
+                            placeholder="instagram_handle"
+                            {...field}
+                            className={`${inputCls} pl-8`}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-red-400 text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="organizerInfo.linkedin"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <Input
+                          placeholder="https://linkedin.com/in/yourprofile"
+                          {...field}
+                          className={inputCls}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-400 text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          )}
         </SectionCard>
 
         {/* ── Submit ── */}
