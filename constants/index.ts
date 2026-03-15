@@ -7,7 +7,7 @@ export const eventDefaultValues = {
   endDateTime: new Date(),
   categoryId: '',
   url: '',
-  postedBy: 'organizer' as 'admin' | 'organizer',
+  postedBy: 'organizer' as 'admin' | 'organizer' | 'student',
   organizerInfo: {
     name: '',
     email: '',
