@@ -27,10 +27,10 @@ export type CreateEventParams = {
     endDateTime: Date
     categoryId: string
     url: string
-    postedBy: 'admin' | 'organizer'
+    postedBy: 'admin' | 'organizer' | 'student'
     organizerInfo?: {
-      name: string
-      email: string
+      name?: string
+      email?: string
       instagram?: string
       linkedin?: string
     }
@@ -52,8 +52,8 @@ export type UpdateEventParams = {
     url: string
     postedBy: 'admin' | 'organizer' | 'student'
     organizerInfo?: {
-      name: string
-      email: string
+      name?: string
+      email?: string
       instagram?: string
       linkedin?: string
     }

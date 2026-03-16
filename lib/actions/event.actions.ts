@@ -32,7 +32,7 @@ export async function createEvent({ event, userId, path }: CreateEventParams) {
   try {
     await connectToDatabase();
 
-    const coords = await getCoordinates(event.location);
+    const coords = await geocodeLocation(event.location);
 
     const newEvent = await Event.create({
       ...event,
