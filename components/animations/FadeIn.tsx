@@ -39,7 +39,7 @@ export function FadeIn({
       ref={ref}
       initial={{ opacity: 0, ...directionMap[direction] }}
       animate={isInView ? { opacity: 1, x: 0, y: 0 } : {}}
-      transition={{ duration, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration, delay, ease: "easeOut"}}
       className={className}
     >
       {children}
@@ -87,7 +87,7 @@ export function StaggerItem({
     <motion.div
       variants={{
         hidden:  { opacity: 0, y: 24 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] } },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
       }}
       className={className}
     >

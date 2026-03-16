@@ -31,7 +31,7 @@ const fadeUp: Variants = {
     y: 0,
     transition: {
       duration: 0.55,
-      ease: [0.25, 0.1, 0.25, 1] as const,
+      ease: "easeOut",
     },
   },
 };
@@ -45,7 +45,7 @@ const cardVariants: Variants = {
     transition: {
       duration: 0.5,
       delay: (i % 9) * 0.07,
-      ease: [0.25, 0.1, 0.25, 1] as const,
+      ease: "easeOut",
     },
   }),
 };
