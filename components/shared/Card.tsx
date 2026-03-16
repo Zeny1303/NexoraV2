@@ -1,4 +1,4 @@
-import { IEvent } from "@/lib/database/models/event.model";
+import { Event } from "@/lib/database/models/event.model";
 import { formatDateTime } from "@/lib/utils";
 import { auth } from "@clerk/nextjs";
 import Image from "next/image";
@@ -7,7 +7,7 @@ import React from "react";
 import { DeleteConfirmation } from "./DeleteConfirmation";
 
 type CardProps = {
-  event: IEvent;
+  event: Event;
   hasOrderLink?: boolean;
   hidePrice?: boolean;
 };
