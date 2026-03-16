@@ -11,14 +11,16 @@ export const eventFormSchema = z.object({
   url: z.string().url(),
   postedBy: z.enum(['admin', 'organizer', 'student']),
   organizerInfo: z.object({
-    name:      z.string().min(2, 'Name must be at least 2 characters'),
-    email:     z.string().email('Please enter a valid email'),
+    name:      z.string().optional(),
+    email:     z.string().optional(),
     instagram: z.string().optional(),
     linkedin:  z.string().optional(),
   }).optional(),
 }).refine((data) => {
+  // ← only validate organizerInfo for organizer and student
   if (data.postedBy === 'organizer' || data.postedBy === 'student') {
-    return !!data.organizerInfo?.name && !!data.organizerInfo?.email
+    if (!data.organizerInfo?.name || data.organizerInfo.name.length < 2) return false
+    if (!data.organizerInfo?.email || !data.organizerInfo.email.includes('@')) return false
   }
   return true
 }, {

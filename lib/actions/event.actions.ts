@@ -7,7 +7,7 @@ import Event from '@/lib/database/models/event.model'
 import User from '@/lib/database/models/user.model'
 import Category from '@/lib/database/models/category.model'
 import { handleError } from '@/lib/utils'
-import { getCoordinates } from "@/lib/utils/geocode";
+import { geocodeLocation } from "@/lib/utils/geocode"
 import {
   CreateEventParams,
   UpdateEventParams,
@@ -182,6 +182,7 @@ export async function getRelatedEventsByCategory({
   }
 }
 
+// lib/actions/event.actions.ts
 export async function getMapEvents() {
   try {
     await connectToDatabase();
@@ -193,12 +194,15 @@ export async function getMapEvents() {
     return events
       .filter((event) => event.coordinates?.lat && event.coordinates?.lng)
       .map((event) => ({
-        id: event._id.toString(),
-        longitude: event.coordinates.lng,
-        latitude: event.coordinates.lat,
-        title: event.title,
-        description: event.description,
-        category: event.category?.name || "other",
+        id:            event._id.toString(),
+        longitude:     event.coordinates.lng,
+        latitude:      event.coordinates.lat,
+        title:         event.title,
+        description:   event.description,
+        location:      event.location,          // ← add this
+        imageUrl:      event.imageUrl,           // ← add this
+        startDateTime: event.startDateTime,      // ← add this
+        category:      event.category?.name || "other",
       }));
   } catch (error) {
     console.log(error);

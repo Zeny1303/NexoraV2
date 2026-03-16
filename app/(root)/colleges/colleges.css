@@ -1,0 +1,90 @@
+/* ── Colleges Bento Grid ── */
+
+.colleges-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 160px;
+  gap: 12px;
+  padding: 0 0 48px;
+}
+
+/* Bento Span Classes */
+.bento-span-2x2 { grid-column: span 2; grid-row: span 2; }
+.bento-span-2x1 { grid-column: span 2; grid-row: span 1; }
+.bento-span-1x2 { grid-column: span 1; grid-row: span 2; }
+.bento-span-1x1 { grid-column: span 1; grid-row: span 1; }
+
+/* College Card */
+.college-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  opacity: 0;
+  transform: translateY(20px);
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Bento Spans — matches the existing code structure */
+.bento-span-2x2 { grid-column: span 2; grid-row: span 2; }
+.bento-span-2x1 { grid-column: span 2; grid-row: span 1; }
+.bento-span-1x2 { grid-column: span 1; grid-row: span 2; }
+.bento-span-1x1 { grid-column: span 1; grid-row: span 1; }
+
+@media (max-width: 1024px) {
+  .colleges-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .bento-span-2x2 { grid-column: span 2; grid-row: span 2; }
+  .bento-span-2x1 { grid-column: span 2; grid-row: span 1; }
+  .bento-span-1x2 { grid-column: span 1; grid-row: span 2; }
+  .bento-span-1x1 { grid-column: span 1; grid-row: span 1; }
+}
+
+@media (max-width: 768px) {
+  .colleges-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 140px;
+    gap: 8px;
+  }
+  .bento-span-2x2 { grid-column: span 2; grid-row: span 2; }
+  .bento-span-2x1 { grid-column: span 2; grid-row: span 1; }
+  .bento-span-1x2 { grid-column: span 1; grid-row: span 2; }
+  .bento-span-1x1 { grid-column: span 1; grid-row: span 1; }
+}
+
+@media (max-width: 480px) {
+  .colleges-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: 220px;
+    gap: 8px;
+  }
+  .bento-span-2x2,
+  .bento-span-2x1,
+  .bento-span-1x2,
+  .bento-span-1x1 {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+}
+
+.college-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 60%
+  );
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+}

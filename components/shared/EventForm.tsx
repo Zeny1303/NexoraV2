@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -22,6 +23,8 @@ import { useRouter } from "next/navigation"
 import { createEvent, updateEvent } from "@/lib/actions/event.actions"
 import { IEvent } from "@/lib/database/models/event.model"
 
+const ADMIN_EMAIL = "snehakashyap9920@gmail.com"
+
 type EventFormProps = {
   userId: string
   type: "Create" | "Update"
@@ -29,7 +32,7 @@ type EventFormProps = {
   eventId?: string
 }
 
-// ── UI helpers ───────────────────────────────────────────────────────────────
+// ── UI helpers ────────────────────────────────────────────────────────────────
 const SectionCard = ({ number, label, children }: {
   number: number; label: string; children: React.ReactNode
 }) => (
@@ -54,15 +57,24 @@ const inputCls =
 
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([])
+  const { user } = useUser()
+
+  // ── Check if current user is admin ──
+  const currentEmail = user?.emailAddresses[0]?.emailAddress
+  const isAdmin = currentEmail === ADMIN_EMAIL
+
   const initialValues = event && type === 'Update'
     ? {
         ...event,
         startDateTime: new Date(event.startDateTime),
         endDateTime:   new Date(event.endDateTime),
       }
-    : eventDefaultValues
-  const router = useRouter()
+    : {
+        ...eventDefaultValues,
+        postedBy: isAdmin ? 'admin' as const : 'organizer' as const,
+      }
 
+  const router = useRouter()
   const { startUpload } = useUploadThing('imageUploader')
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
@@ -70,13 +82,16 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     defaultValues: initialValues,
   })
 
-  // ── current postedBy value (reactive) ──
+  // ── reactive postedBy ──
   const postedBy = form.watch('postedBy')
+
+  // ── only show contact fields for organizer/student, never admin ──
   const showContactFields = postedBy === 'organizer' || postedBy === 'student'
 
   async function onSubmit(values: z.infer<typeof eventFormSchema>) {
     let uploadedImageUrl = values.imageUrl
 
+    // ── Image upload ──
     if (files.length > 0) {
       const file = files[0]
       const fileSizeMB = file.size / 1024 / 1024
@@ -97,25 +112,19 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
       try {
         const uploadedImages = await startUpload(files)
-
         if (!uploadedImages || uploadedImages.length === 0) {
           toast.error("Image upload failed", {
             description: "Could not upload your image. Please try again.",
           })
           return
         }
-
         uploadedImageUrl = uploadedImages[0].url
-
       } catch (uploadError: any) {
         const msg: string = uploadError?.message ?? ""
-
         if (msg.includes("size") || msg.includes("FileSizeMismatch")) {
           toast.error("Image too large", { description: "Please re-upload an image under 4MB." })
         } else if (msg.includes("500") || msg.includes("Internal")) {
           toast.error("Server error during upload", { description: "Please try again later." })
-        } else if (msg.includes("Invalid config") || msg.includes("presigned")) {
-          toast.error("Upload configuration error", { description: "Please contact support." })
         } else {
           toast.error("Upload failed", { description: msg || "Unknown error during image upload." })
         }
@@ -123,10 +132,24 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
       }
     }
 
+    // ── Admin auto-fills organizerInfo, no form fields needed ──
+    const finalValues = {
+      ...values,
+      imageUrl: uploadedImageUrl,
+      organizerInfo: values.postedBy === 'admin'
+        ? {
+            name:      "Nexora Admin",
+            email:     ADMIN_EMAIL,
+            instagram: undefined,
+            linkedin:  undefined,
+          }
+        : values.organizerInfo,
+    }
+
     if (type === 'Create') {
       try {
         const newEvent = await createEvent({
-          event: { ...values, imageUrl: uploadedImageUrl },
+          event: finalValues,
           userId,
           path: '/profile',
         })
@@ -140,7 +163,6 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
         }
       } catch (error: any) {
         const msg: string = error?.message ?? ""
-
         if (msg.includes("500") || msg.includes("Internal")) {
           toast.error("Internal server error", { description: "Please try again later." })
         } else if (msg.includes("401") || msg.includes("Unauthorized")) {
@@ -160,18 +182,19 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
       try {
         const updatedEvent = await updateEvent({
           userId,
-          event: { ...values, imageUrl: uploadedImageUrl, _id: eventId },
+          event: { ...finalValues, _id: eventId },
           path: `/events/${eventId}`,
         })
 
         if (updatedEvent) {
           form.reset()
-          toast.success("Event updated successfully!", { description: "Your changes have been saved." })
+          toast.success("Event updated successfully!", {
+            description: "Your changes have been saved.",
+          })
           router.push(`/events/${updatedEvent._id}`)
         }
       } catch (error: any) {
         const msg: string = error?.message ?? ""
-
         if (msg.includes("500") || msg.includes("Internal")) {
           toast.error("Internal server error", { description: "Please try again later." })
         } else if (msg.includes("401") || msg.includes("Unauthorized")) {
@@ -391,6 +414,16 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
 
         {/* ── 6. Posted By ── */}
         <SectionCard number={6} label="Posted By">
+
+          {/* Admin badge — only visible to admin */}
+          {isAdmin && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl
+                            bg-violet-500/10 border border-violet-500/20 w-fit">
+              <span className="w-2 h-2 rounded-full bg-violet-400" />
+              <span className="text-violet-300 text-xs font-medium">Signed in as Admin</span>
+            </div>
+          )}
+
           <FormField
             control={form.control}
             name="postedBy"
@@ -398,18 +431,28 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
               <FormItem className="w-full">
                 <FormControl>
                   <div className="flex gap-3">
-                    {/* Admin */}
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('admin')}
-                      className={`flex-1 h-12 rounded-xl border text-sm font-medium transition-all duration-200
-                        ${field.value === 'admin'
-                          ? 'border-violet-500 bg-violet-500/20 text-violet-300'
-                          : 'border-white/10 bg-white/5 text-white/50 hover:border-white/20'
-                        }`}
-                    >
-                      Admin
-                    </button>
+
+                    {/* Admin button — only shown to admin email */}
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          field.onChange('admin')
+                          // clear organizerInfo so no validation error
+                          form.setValue('organizerInfo', {
+                            name: '', email: '', instagram: '', linkedin: '',
+                          })
+                        }}
+                        className={`flex-1 h-12 rounded-xl border text-sm font-medium transition-all duration-200
+                          ${field.value === 'admin'
+                            ? 'border-violet-500 bg-violet-500/20 text-violet-300'
+                            : 'border-white/10 bg-white/5 text-white/50 hover:border-white/20'
+                          }`}
+                      >
+                        Admin
+                      </button>
+                    )}
+
                     {/* Event Organizer */}
                     <button
                       type="button"
@@ -422,6 +465,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                     >
                       Event Organizer
                     </button>
+
                     {/* Student */}
                     <button
                       type="button"
@@ -434,6 +478,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                     >
                       Student
                     </button>
+
                   </div>
                 </FormControl>
                 <FormMessage className="text-red-400 text-xs" />
@@ -441,7 +486,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             )}
           />
 
-          {/* Contact fields — shown for organizer and student */}
+          {/* Contact fields — only for organizer and student, never admin */}
           {showContactFields && (
             <div className="flex flex-col gap-4 mt-2">
               <p className="text-xs text-white/40 uppercase tracking-wider">

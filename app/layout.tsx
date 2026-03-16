@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 
+import { SpotlightCursor } from "@/components/animations/SpotlightCursor";
 import './globals.css'
 
 const poppins = Poppins({
@@ -26,7 +27,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={poppins.variable}>{children}</body>
+        <body className={poppins.variable}>
+          <SpotlightCursor />
+          {children}</body>
       </html>
     </ClerkProvider>
   )

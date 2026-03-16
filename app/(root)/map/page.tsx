@@ -1,12 +1,13 @@
-import EventMap from "@/components/shared/EventMap";
-import { getMapEvents } from "@/lib/actions/event.actions";
+"use client"
 
-export default async function MapPage() {
-  const events = await getMapEvents();
+import MapComponent from "@/components/map/MapComponent"
+
+export default function MapPage() {
 
   return (
     <main className="h-screen w-screen">
-      <EventMap events={events} />
+      <MapComponent />
     </main>
-  );
+  )
+
 }

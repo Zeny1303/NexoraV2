@@ -88,7 +88,7 @@ const Footer = () => {
           </h3>
 
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium text-white">Sneha Kashyap</p>
+            <p className="text-sm font-medium text-white">Sneha </p>
             <p className="text-xs text-white/40">Designer & Developer</p>
           </div>
 
