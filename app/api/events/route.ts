@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/database"; // adjust path if needed
 import Event from "@/lib/database/models/event.model";
-
+export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     await connectToDatabase();
