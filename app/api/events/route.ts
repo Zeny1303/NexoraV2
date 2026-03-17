@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/database"; // adjust path if needed
 import Event from "@/lib/database/models/event.model";
 export const dynamic = "force-dynamic";
+import Category from "@/lib/database/models/category.model";
+import User from "@/lib/database/models/user.model";
+import Order from "@/lib/database/models/order.model";
 export async function GET(request: Request) {
   try {
     await connectToDatabase();
