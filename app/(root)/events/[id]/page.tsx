@@ -18,10 +18,11 @@ const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) 
   const endDate   = formatDateTime(event.endDateTime)
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-[#0a0a0f] text-white pt-[80px]">
 
       {/* ── Hero ── */}
-      <div className="relative w-full h-[45vh] md:h-[55vh] overflow-hidden">
+      {/* ── Hero ── */}
+      <div className="relative w-full overflow-hidden" style={{ height: 'calc(45vh + 80px)', paddingTop: '80px' }}>
         <Image
           src={event.imageUrl}
           alt={event.title}

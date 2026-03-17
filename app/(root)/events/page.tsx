@@ -154,7 +154,7 @@ export default function EventsPage() {
     async function fetchEvents() {
       try {
         const res = await fetch("/api/events?limit=1000");
-
+        console.log("STATUS:", res.status);
         if (!res.ok) throw new Error("Failed to fetch");
 
         const data = await res.json();
@@ -171,8 +171,9 @@ export default function EventsPage() {
 
         setCategories(["All", ...Array.from(uniqueCategories)]);
       } catch (error) {
-        console.error("Error fetching events:", error);
-      } finally {
+  console.error("Error fetching events:", error);
+  alert("Error: " + String(error)); // ← temporary debug
+} finally {
         setIsLoading(false);
       }
     }

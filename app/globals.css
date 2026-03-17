@@ -75,9 +75,9 @@
 }
 
 body {
-  font-family: var(--font-poppins)
+  @apply bg-black text-white;
+  font-family: var(--font-poppins);
 }
-
 .filter-grey {
   filter: brightness(0) saturate(100%) invert(47%) sepia(0%) saturate(217%)
     hue-rotate(32deg) brightness(98%) contrast(92%);
@@ -85,9 +85,10 @@ body {
 
 /* ========================================== TAILWIND STYLES */
 @layer utilities {
+  
   .wrapper {
-    @apply max-w-7xl lg:mx-auto p-5 md:px-10 xl:px-0 w-full;
-  }
+  @apply max-w-7xl lg:mx-auto p-5 md:px-10 xl:px-0 w-full;
+}
 
   .flex-center {
     @apply flex justify-center items-center;
@@ -353,3 +354,27 @@ select.select-field {
 }
 
 /* ========================================== */
+
+/* ─── OR Divider Line + Text ─── */
+.cl-dividerLine {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.cl-dividerText {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+
+/* ─── OPTIONAL text ─── */
+.cl-formFieldLabelOptional {
+  color: #ffffff !important;
+}
+
+
+/* ─── Eye icon (password visibility) ─── */
+.cl-formFieldInputShowPasswordButton {
+  color: #ffffff !important;
+}
+.cl-formFieldInputShowPasswordButton:hover {
+  color: #ffffff !important;
+}
